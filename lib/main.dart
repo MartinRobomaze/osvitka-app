@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 
 void main() {
   runApp(const MyApp());
@@ -12,7 +13,6 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Flutter Demo',
       theme: ThemeData(
-
         primarySwatch: Colors.blue,
       ),
       home: const MyHomePage(title: 'Flutter Demo Home Page'),
@@ -28,6 +28,8 @@ class MyHomePage extends StatefulWidget {
   State<MyHomePage> createState() => _MyHomePageState();
 }
 
+int timeToSet = 0;
+
 class _MyHomePageState extends State<MyHomePage> {
   int _counter = 0;
 
@@ -39,7 +41,6 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.title),
@@ -48,13 +49,29 @@ class _MyHomePageState extends State<MyHomePage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            const Text(
-              'You have pushed the button this many times:',
+            // const TextField(
+            //     decoration: InputDecoration(labelText: "Enter your number"),
+            //     keyboardType: TextInputType.number,
+            //     inputFormatters: <TextInputFormatter>[
+            //       FilteringTextInputFormatter.digitsOnly
+            //     ])
+            Container(
+              height: 300,
+              child: CupertinoDatePicker(
+                  mode: CupertinoDatePickerMode.time,
+                  use24hFormat: true,
+                  onDateTimeChanged: (dateTime) {
+                    timeToSet = (dateTime.hour.toInt() * 60 + dateTime.minute.toInt()).toInt();
+                  }),
             ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headline4,
-            ),
+            TextButton(
+              style: TextButton.styleFrom(
+                primary: Colors.blue,
+                backgroundColor: Colors.grey,
+              ),
+              onPressed: () { },
+              child: Text('TextButton'),
+            )
           ],
         ),
       ),
