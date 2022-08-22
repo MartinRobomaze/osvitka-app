@@ -15,11 +15,17 @@ class OsvitkaStatus {
 
   factory OsvitkaStatus.fromJson(Map<String, dynamic> json) {
     return OsvitkaStatus(
-        exposureTime: json['exposureTime'] == "" ? json['exposureTime'] : 0,
-        power: json['power'] == "" ? json['power'] : 0,
+        exposureTime: json['exposureTime'] ?? 0,
+        power: json['power'] ?? 0,
         status: json['status']
     );
   }
+
+  Map toJson() => {
+    'exposureTime': exposureTime,
+    'power': power,
+    'status': status,
+  };
 }
 
 class OsvitkaClient {
@@ -28,8 +34,8 @@ class OsvitkaClient {
   OsvitkaClient(this.url);
 
   Future<OsvitkaStatus> setStatus(OsvitkaStatus status) async {
-    var statusJson = json.encode(status);
-    final resp = await http.post(Uri.http(url, 'status'),
+    var statusJson = jsonEncode(status);
+    final resp = await http.put(Uri.http(url, 'status'),
         headers: {"Content-Type": "application/json"},
         body: statusJson,
     );
