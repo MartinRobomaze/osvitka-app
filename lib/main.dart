@@ -29,6 +29,7 @@ class MyHomePage extends StatefulWidget {
 }
 
 int timeToSet = 0;
+double timeLeft = 0.5;
 
 class _MyHomePageState extends State<MyHomePage> {
   int _counter = 0;
@@ -55,31 +56,42 @@ class _MyHomePageState extends State<MyHomePage> {
             //     inputFormatters: <TextInputFormatter>[
             //       FilteringTextInputFormatter.digitsOnly
             //     ])
-            Container(
-              height: 300,
-              child: CupertinoDatePicker(
-                  mode: CupertinoDatePickerMode.time,
-                  use24hFormat: true,
-                  onDateTimeChanged: (dateTime) {
-                    timeToSet = (dateTime.hour.toInt() * 60 + dateTime.minute.toInt()).toInt();
-                  }),
+            Column(
+              children: [
+                Container(
+                  height: 300,
+                  child: CupertinoDatePicker(
+                      mode: CupertinoDatePickerMode.time,
+                      use24hFormat: true,
+                      onDateTimeChanged: (dateTime) {
+                        timeToSet = (dateTime.hour.toInt() * 60 + dateTime.minute.toInt()).toInt();
+                      }),
+                ),
+                TextButton(
+                  style: TextButton.styleFrom(
+                    primary: Colors.blue,
+                    backgroundColor: Colors.grey,
+                  ),
+                  onPressed: () { },
+                  child: Text('Textík'),
+                ),
+                SizedBox(
+                  width: 100,
+                  height: 100,
+                  child: CircularProgressIndicator(
+                    value: timeLeft.toDouble(),
+                  ),
+                ),
+              ],
             ),
-            TextButton(
-              style: TextButton.styleFrom(
-                primary: Colors.blue,
-                backgroundColor: Colors.grey,
-              ),
-              onPressed: () { },
-              child: Text('TextButton'),
-            )
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
+      // floatingActionButton: FloatingActionButton(
+      //   onPressed: _incrementCounter,
+      //   tooltip: 'Increment',
+      //   child: const Icon(Icons.add),
+      // ), // This trailing comma makes auto-formatting nicer for build methods.
     );
   }
 }
