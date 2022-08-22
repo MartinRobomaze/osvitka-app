@@ -1,5 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
+import 'package:osvitka/client.dart';
+import 'package:duration_picker/duration_picker.dart';
+import 'dart:developer';
+
 
 void main() {
   runApp(const MyApp());
@@ -15,7 +20,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      home: const MyHomePage(title: 'Osvitka controller'),
     );
   }
 }
@@ -28,16 +33,70 @@ class MyHomePage extends StatefulWidget {
   State<MyHomePage> createState() => _MyHomePageState();
 }
 
-int timeToSet = 0;
-double timeLeft = 0.5;
+Duration timeToSet = const Duration();
 
 class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+  late OsvitkaClient client;
+  late Future<OsvitkaStatus> status;
 
-  void _incrementCounter() {
+  bool turnedOffFlag = false;
+
+  void getOsvitkaStatus() {
     setState(() {
-      _counter++;
+      status = client.getStatus();
     });
+  }
+  
+  void turnOn() {
+    setState(() {
+      var exposureTime = timeToSet.inSeconds;
+      var power = 65535;
+      var LEDStatus = "on";
+
+      status = client.setStatus(OsvitkaStatus(
+        exposureTime: exposureTime,
+        power: power,
+        status: LEDStatus,
+      ));
+
+      Timer.periodic(const Duration(seconds: 1), (timer) {
+        setState(() {
+          timeToSet = Duration(seconds: timeToSet.inSeconds - 1);
+        });
+
+        if (timeToSet.inSeconds < 0 || turnedOffFlag) {
+          timer.cancel();
+          turnedOffFlag = false;
+
+          setState(() {
+            status = Future(() => const OsvitkaStatus(
+              exposureTime: 0,
+              power: 0,
+              status: "off"));
+            }
+          );
+        }
+      });
+    });
+  }
+
+  void turnOff() {
+    turnedOffFlag = true;
+    setState(() {
+      status = client.setStatus(const OsvitkaStatus(
+        exposureTime: 0,
+        power: 0,
+        status: "off",
+      )
+      );
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    client = OsvitkaClient("192.168.4.1");
+    status = client.getStatus();
   }
 
   @override
@@ -45,53 +104,89 @@ class _MyHomePageState extends State<MyHomePage> {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.title),
+        actions: [
+          IconButton(
+              onPressed: getOsvitkaStatus,
+              icon: const Icon(Icons.refresh)
+          )
+        ],
       ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            // const TextField(
-            //     decoration: InputDecoration(labelText: "Enter your number"),
-            //     keyboardType: TextInputType.number,
-            //     inputFormatters: <TextInputFormatter>[
-            //       FilteringTextInputFormatter.digitsOnly
-            //     ])
-            Column(
+      body: Column(
+        children: [
+          Expanded(
+            flex: 2,
+            child: Duration Picker(
+              duration: timeToSet,
+              baseUnit: BaseUnit.second,
+              onChange: (val) {
+                setState(() => timeToSet = val);
+              },
+              snapToMins: 5.0,
+            ),
+          ),
+          Expanded(
+            flex: 1,
+            child: Column(
               children: [
-                Container(
-                  height: 300,
-                  child: CupertinoDatePicker(
-                      mode: CupertinoDatePickerMode.time,
-                      use24hFormat: true,
-                      onDateTimeChanged: (dateTime) {
-                        timeToSet = (dateTime.hour.toInt() * 60 + dateTime.minute.toInt()).toInt();
-                      }),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: TextButton(
+                        style: TextButton.styleFrom(
+                          primary: Colors.white,
+                          backgroundColor: Colors.blueAccent,
+                        ),
+                        onPressed: turnOn,
+                        child: const Text('TURN ON'),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: IconButton(
+                        icon: const Icon(Icons.exposure_zero),
+                        onPressed: () {
+                          setState(() {
+                            timeToSet = const Duration();
+                          });
+                        },
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: TextButton(
+                        style: TextButton.styleFrom(
+                          primary: Colors.white,
+                          backgroundColor: Colors.redAccent,
+                        ),
+                        onPressed: turnOff,
+                        child: const Text('TURN OFF'),
+                      ),
+                    ),
+                  ],
                 ),
-                TextButton(
-                  style: TextButton.styleFrom(
-                    primary: Colors.blue,
-                    backgroundColor: Colors.grey,
-                  ),
-                  onPressed: () { },
-                  child: Text('Textík'),
-                ),
-                SizedBox(
-                  width: 100,
-                  height: 100,
-                  child: CircularProgressIndicator(
-                    value: timeLeft.toDouble(),
+                Center(
+                  child: FutureBuilder<OsvitkaStatus>(
+                    future: status,
+                    builder: (context, snapshot) {
+                      if (snapshot.hasData) {
+                        return Text(
+                          "Current status: ${snapshot.data!.status}",
+                          style: Theme.of(context).textTheme.headline4,
+                        );
+                      } else if (snapshot.hasError) {
+                        return Text('Error ${snapshot.error}');
+                      }
+                      return const CircularProgressIndicator();
+                    },
                   ),
                 ),
               ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
-      // floatingActionButton: FloatingActionButton(
-      //   onPressed: _incrementCounter,
-      //   tooltip: 'Increment',
-      //   child: const Icon(Icons.add),
-      // ), // This trailing comma makes auto-formatting nicer for build methods.
     );
   }
 }
