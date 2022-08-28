@@ -30,14 +30,20 @@ class OsvitkaStatus {
 
 class OsvitkaClient {
   String url;
+  int timeout;
 
-  OsvitkaClient(this.url);
+  OsvitkaClient(this.url, this.timeout);
 
   Future<OsvitkaStatus> setStatus(OsvitkaStatus status) async {
     var statusJson = jsonEncode(status);
     final resp = await http.put(Uri.http(url, 'status'),
         headers: {"Content-Type": "application/json"},
         body: statusJson,
+    ).timeout(
+      Duration(seconds: timeout),
+      onTimeout: () {
+        return http.Response('Timeout', 408);
+      }
     );
 
     if (resp.statusCode == 200) {
@@ -48,7 +54,12 @@ class OsvitkaClient {
   }
 
   Future<OsvitkaStatus> getStatus() async {
-    final resp = await http.get(Uri.http(url, 'status'));
+    final resp = await http.get(Uri.http(url, 'status')).timeout(
+      Duration(seconds: timeout),
+      onTimeout: () {
+        return http.Response('Timeout', 408);
+      }
+    );
 
     if (resp.statusCode == 200) {
       return OsvitkaStatus.fromJson(jsonDecode(resp.body));

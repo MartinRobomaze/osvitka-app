@@ -1,9 +1,7 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:osvitka/client.dart';
 import 'package:duration_picker/duration_picker.dart';
-import 'dart:developer';
 
 
 void main() {
@@ -64,7 +62,7 @@ class _MyHomePageState extends State<MyHomePage> {
           timeToSet = Duration(seconds: timeToSet.inSeconds - 1);
         });
 
-        if (timeToSet.inSeconds < 0 || turnedOffFlag) {
+        if (timeToSet.inSeconds <= 0 || turnedOffFlag) {
           timer.cancel();
           turnedOffFlag = false;
 
@@ -92,10 +90,34 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
+  void showErrorDialog() async {
+    await Future.delayed(const Duration(microseconds: 1));
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text("Error connecting to osvitka"),
+        content: const Text("Could not connect to RPi Pico. Try to connect to RPi Pico WiFi Access Point on your device."),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () {
+              Navigator.of(ctx).pop();
+              getOsvitkaStatus();
+            },
+            child: Container(
+              padding: const EdgeInsets.all(14),
+              child: const Text("OK"),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   void initState() {
     super.initState();
-    client = OsvitkaClient("192.168.4.1");
+    client = OsvitkaClient("192.168.4.1", 3);
     status = client.getStatus();
   }
 
@@ -115,7 +137,7 @@ class _MyHomePageState extends State<MyHomePage> {
         children: [
           Expanded(
             flex: 2,
-            child: Duration Picker(
+            child: DurationPicker(
               duration: timeToSet,
               baseUnit: BaseUnit.second,
               onChange: (val) {
@@ -176,7 +198,7 @@ class _MyHomePageState extends State<MyHomePage> {
                           style: Theme.of(context).textTheme.headline4,
                         );
                       } else if (snapshot.hasError) {
-                        return Text('Error ${snapshot.error}');
+                        showErrorDialog();
                       }
                       return const CircularProgressIndicator();
                     },
